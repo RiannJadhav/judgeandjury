@@ -1,5 +1,6 @@
+const https = require("https");
+
 exports.handler = async function (event) {
-  // Only allow POST
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
@@ -21,19 +22,13 @@ exports.handler = async function (event) {
 
   const prompt = `You are a rigorous, impartial arbiter with one core obligation: reach the CORRECT verdict based on the substance of each argument, not how well it is written.
 
-CRITICAL RULES you must follow before analysing anything:
-
-1. IGNORE writing quality entirely. Do not reward eloquence, length, vocabulary, or structure. A short, blunt argument can be completely correct. A long, articulate argument can be entirely wrong. Judge the substance — the facts, reasoning, and logic — not the packaging.
-
-2. CORRECT for articulation bias. If one side is clearly less articulate, actively ask yourself: "What are they actually saying beneath the surface?" Extract their core claim and evaluate it on its merits. A poorly worded argument that is fundamentally right must beat a beautifully written argument that is fundamentally wrong.
-
-3. IDENTIFY the actual crux. What is this dispute really about? Strip away emotion, framing, and rhetoric from both sides. Find the core factual or moral disagreement and rule on that.
-
-4. CALL OUT weak reasoning on BOTH sides equally. If Side A makes a logical fallacy, name it. If Side B makes one, name it too. Do not go easier on the winning side.
-
-5. DECLARE a TIE only when genuinely warranted — when both sides have equal merit on the core issue after honest evaluation. Do not use TIE to avoid making a hard call.
-
-6. EXPLAIN your verdict clearly enough that the losing side understands exactly why they lost and what would have changed the outcome.
+CRITICAL RULES:
+1. IGNORE writing quality entirely. Judge the substance, facts, and logic — not the packaging.
+2. CORRECT for articulation bias. If one side is less articulate, extract their core claim and evaluate it on its merits.
+3. IDENTIFY the actual crux. Strip away emotion and rhetoric. Find the core disagreement and rule on that.
+4. CALL OUT weak reasoning on BOTH sides equally.
+5. DECLARE a TIE only when genuinely warranted.
+6. EXPLAIN your verdict clearly enough that the losing side understands exactly why they lost.
 
 ${ctx}SIDE A: "${argA}"
 
@@ -42,54 +37,73 @@ SIDE B: "${argB}"
 Respond ONLY with a valid JSON object. No preamble, no markdown fences. Required keys:
 - "winner": "A", "B", or "TIE"
 - "winner_reason": punchy 8-12 word headline saying who won and why
-- "summary": 2-3 sentence executive summary of the verdict — lead with the core reason, not a description of the arguments
-- "score_a": integer 0-100 reflecting the substantive strength of Side A's position (not their writing)
-- "score_b": integer 0-100 reflecting the substantive strength of Side B's position (not their writing)
-- "analysis_a": 3-5 sentences on Side A — what their core claim actually is, what supports it, what undermines it, any logical fallacies
-- "analysis_b": 3-5 sentences on Side B — what their core claim actually is, what supports it, what undermines it, any logical fallacies
-- "full_analysis": 3-4 paragraphs of thorough deliberation. Paragraph 1: what the dispute is actually about at its core. Paragraph 2: evaluation of Side A's substantive position. Paragraph 3: evaluation of Side B's substantive position. Paragraph 4: why the verdict lands where it does, and what the losing side would have needed to say to win. Plain text, newline between paragraphs.`;
+- "summary": 2-3 sentence executive summary of the verdict
+- "score_a": integer 0-100 for substantive strength of Side A
+- "score_b": integer 0-100 for substantive strength of Side B
+- "analysis_a": 3-5 sentences on Side A — core claim, what supports it, what undermines it, any logical fallacies
+- "analysis_b": 3-5 sentences on Side B — core claim, what supports it, what undermines it, any logical fallacies
+- "full_analysis": 4 paragraphs. P1: what the dispute is actually about. P2: evaluation of Side A. P3: evaluation of Side B. P4: why the verdict lands where it does and what the loser needed to say to win. Plain text, newline between paragraphs.`;
 
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  const requestBody = JSON.stringify({
+    model: "llama-3.3-70b-versatile",
+    max_tokens: 1500,
+    messages: [
+      {
+        role: "system",
+        content: "You are an impartial arbiter. Always respond with valid JSON only — no markdown, no preamble."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+  });
+
+  return new Promise((resolve) => {
+    const options = {
+      hostname: "api.groq.com",
+      path: "/openai/v1/chat/completions",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Length": Buffer.byteLength(requestBody),
       },
-      body: JSON.stringify({
-        model: "claude-opus-4-5",
-        max_tokens: 1500,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    };
+
+    const req = https.request(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => { data += chunk; });
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          const text = parsed.choices[0].message.content;
+          const clean = text.replace(/```json|```/g, "").trim();
+          JSON.parse(clean);
+          resolve({
+            statusCode: 200,
+            headers: { "Content-Type": "application/json" },
+            body: clean,
+          });
+        } catch (err) {
+          resolve({
+            statusCode: 500,
+            body: JSON.stringify({ error: "Parse error", raw: data }),
+          });
+        }
+      });
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Anthropic error:", data);
-      return {
+    req.on("error", (err) => {
+      resolve({
         statusCode: 500,
-        body: JSON.stringify({ error: "AI request failed", detail: data }),
-      };
-    }
+        body: JSON.stringify({ error: err.message }),
+      });
+    });
 
-    const text = (data.content || []).map((b) => b.text || "").join("");
-    const clean = text.replace(/```json|```/g, "").trim();
-
-    // Validate it's parseable JSON before sending back
-    JSON.parse(clean);
-
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: clean,
-    };
-  } catch (err) {
-    console.error("Function error:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error" }),
-    };
-  }
+    req.write(requestBody);
+    req.end();
+  });
 };
