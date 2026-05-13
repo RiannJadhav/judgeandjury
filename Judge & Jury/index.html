@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Judge & Jury — Two Sides. One Fair Verdict.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #0D1B2A;
+    --gold: #C9A84C;
+    --gold-light: #E8C96A;
+    --white: #FFFFFF;
+    --muted: rgba(255,255,255,0.45);
+    --faint: rgba(255,255,255,0.08);
+    --border: rgba(255,255,255,0.1);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .page { display: none; min-height: 100vh; flex-direction: column; }
+  .page.active { display: flex; }
+
+  /* NAV */
+  nav {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .logo span { color: var(--gold); }
+  .step-tag {
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.06em;
+  }
+
+  /* SHARED BODY */
+  .body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 24px;
+  }
+
+  /* LANDING */
+  .landing-body {
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .landing-body::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 68%);
+    pointer-events: none;
+  }
+  .scales-anim { animation: float 5s ease-in-out infinite; display: block; margin: 0 auto 32px; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(40px,6vw,70px);
+    font-weight: 900;
+    line-height: 1.07;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  h1 em { font-style: italic; color: var(--gold); }
+  .lead {
+    font-size: 17px;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 460px;
+    margin: 0 auto 44px;
+  }
+  .start-btn {
+    background: var(--gold);
+    color: var(--navy);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 15px 44px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+  .start-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .privacy-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 56px;
+  }
+  .steps-row {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    max-width: 660px;
+    width: 100%;
+    position: relative;
+  }
+  .step {
+    flex: 1;
+    padding: 22px 24px;
+    border-right: 1px solid var(--border);
+    text-align: left;
+  }
+  .step:last-child { border-right: none; }
+  .step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 900;
+    color: rgba(201,168,76,0.18);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .step h4 { font-size: 14px; font-weight: 500; margin-bottom: 5px; }
+  .step p { font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.32); line-height: 1.6; margin: 0; }
+
+  /* FORM CARD */
+  .form-card {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 40px;
+  }
+  .form-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-a { background: #7EB8F0; }
+  .dot-b { background: #8FD4A8; }
+  .ey-a { color: #7EB8F0; }
+  .ey-b { color: #8FD4A8; }
+  .form-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+  .form-sub {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 28px;
+  }
+  .field-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .inp {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.85);
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  .inp::placeholder { color: rgba(255,255,255,0.18); }
+  .inp:focus { border-color: rgba(201,168,76,0.4); }
+  textarea.inp { min-height: 175px; resize: vertical; line-height: 1.7; }
+  .action-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    background: var(--gold);
+    color: var(--navy);
+    margin-top: 4px;
+  }
+  .action-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .err {
+    display: none;
+    background: rgba(226,75,74,0.1);
+    border: 1px solid rgba(226,75,74,0.22);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #F09595;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  /* SHARE PAGE */
+  .share-wrap { width: 100%; max-width: 560px; text-align: center; }
+  .share-icon { font-size: 54px; display: block; margin-bottom: 22px; animation: float 4s ease-in-out infinite; }
+  .share-wrap h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .share-wrap p { font-size: 15px; font-weight: 300; color: var(--muted); line-height: 1.7; margin-bottom: 30px; }
+  .link-box {
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+  .link-text {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.45);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: monospace;
+    letter-spacing: 0.02em;
+  }
+  .copy-btn {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 7px;
+    padding: 8px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .copy-btn:hover { background: var(--gold-light); }
+  .copy-btn.copied { background: #8FD4A8; color: #0D3320; }
+  .share-note { font-size: 12px; color: rgba(255,255,255,0.18); line-height: 1.6; }
+
+  /* LOADING */
+  .loading-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+  }
+  .gavel { font-size: 56px; display: block; margin-bottom: 24px; animation: rock 1.3s ease-in-out infinite; }
+  @keyframes rock { 0%,100%{transform:rotate(-18deg)} 50%{transform:rotate(18deg)} }
+  .loading-body strong {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .loading-body p { font-size: 15px; color: rgba(255,255,255,0.32); font-weight: 300; }
+  .dots { display: inline-flex; gap: 7px; margin-top: 28px; }
+  .dots span {
+    width: 7px; height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    opacity: 0.25;
+    animation: dp 1.4s ease-in-out infinite;
+  }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dp { 0%,100%{opacity:0.2;transform:scale(0.85)} 50%{opacity:1;transform:scale(1.1)} }
+
+  /* VERDICT */
+  .verdict-body {
+    flex: 1;
+    padding: 48px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .v-inner { width: 100%; max-width: 760px; }
+  .v-banner { border-radius: 16px; padding: 30px 34px; margin-bottom: 16px; }
+  .win-a { background: rgba(56,138,221,0.1); border: 1px solid rgba(56,138,221,0.22); }
+  .win-b { background: rgba(99,153,34,0.1); border: 1px solid rgba(99,153,34,0.22); }
+  .win-tie { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.18); }
+  .v-tag { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+  .win-a .v-tag { color: #7EB8F0; }
+  .win-b .v-tag { color: #8FD4A8; }
+  .win-tie .v-tag { color: var(--gold); }
+  .v-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(20px,3vw,28px);
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+  .v-summary { font-size: 15px; line-height: 1.75; color: var(--muted); font-weight: 300; }
+  .block {
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 14px;
+  }
+  .block-lbl { font-size: 11px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.22); margin-bottom: 18px; }
+  .sc-line { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .sc-line:last-child { margin-bottom: 0; }
+  .sc-name { font-size: 13px; font-weight: 500; min-width: 58px; }
+  .sc-track { flex: 1; height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+  .sc-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+  .f-a { background: #7EB8F0; }
+  .f-b { background: #8FD4A8; }
+  .sc-num { font-size: 14px; font-weight: 500; min-width: 28px; text-align: right; color: rgba(255,255,255,0.7); }
+  .ag { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .ac {
+    background: var(--faint);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .ac h4 { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .ac-a h4 { color: #7EB8F0; }
+  .ac-b h4 { color: #8FD4A8; }
+  .ac p { font-size: 13px; line-height: 1.75; color: rgba(255,255,255,0.42); font-weight: 300; }
+  .delib h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .delib p { font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.42); font-weight: 300; margin-bottom: 12px; }
+  .delib p:last-child { margin-bottom: 0; }
+  .restart-btn {
+    width: 100%;
+    max-width: 760px;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    margin-top: 6px;
+  }
+  .restart-btn:hover { border-color: rgba(255,255,255,0.22); color: rgba(255,255,255,0.6); }
+
+  @media (max-width: 580px) {
+    nav { padding: 0 20px; }
+    .form-card { padding: 26px 20px; }
+    .steps-row { flex-direction: column; }
+    .step { border-right: none; border-bottom: 1px solid var(--border); }
+    .step:last-child { border-bottom: none; }
+    .ag { grid-template-columns: 1fr; }
+    .v-banner { padding: 22px 20px; }
+    .block { padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE: LANDING -->
+<div class="page active" id="pg-land">
+  <nav><span class="logo">JUDGE <span>&</span> JURY</span><span class="step-tag">AI Dispute Resolution</span></nav>
+  <div class="body landing-body">
+    <svg class="scales-anim" width="96" height="96" viewBox="0 0 96 96" fill="none">
+      <circle cx="48" cy="48" r="46" stroke="#C9A84C" stroke-width="0.6" opacity="0.12"/>
+      <rect x="46" y="16" width="4" height="56" rx="2" fill="#C9A84C" opacity="0.45"/>
+      <rect x="18" y="28" width="60" height="3" rx="1.5" fill="#C9A84C" opacity="0.55"/>
+      <line x1="26" y1="31" x2="26" y2="50" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.5"/>
+      <line x1="70" y1="31" x2="70" y2="44" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.5"/>
+      <ellipse cx="26" cy="54" rx="11" ry="3.5" stroke="#C9A84C" stroke-width="1.2" fill="#C9A84C" fill-opacity="0.08" opacity="0.65"/>
+      <ellipse cx="70" cy="48" rx="11" ry="3.5" stroke="#C9A84C" stroke-width="1.2" fill="#C9A84C" fill-opacity="0.08" opacity="0.65"/>
+      <circle cx="48" cy="16" r="3" fill="#C9A84C" opacity="0.65"/>
+      <rect x="42" y="71" width="12" height="4" rx="2" fill="#C9A84C" opacity="0.35"/>
+    </svg>
+    <div class="eyebrow">AI-Powered Dispute Resolution</div>
+    <h1>Two sides.<br><em>One fair verdict.</em></h1>
+    <p class="lead">Each person submits their argument privately — on their own device. The AI hears both sides and delivers an impartial, reasoned ruling.</p>
+    <button class="start-btn" onclick="goTo('pg-side-a')">Begin — Side A goes first</button>
+    <div class="privacy-note">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      Neither side can read the other's argument
+    </div>
+    <div class="steps-row">
+      <div class="step"><div class="step-num">01</div><h4>Side A submits</h4><p>Types their argument privately on their device.</p></div>
+      <div class="step"><div class="step-num">02</div><h4>Side B gets a link</h4><p>Opens it privately, submits their side without seeing A's.</p></div>
+      <div class="step"><div class="step-num">03</div><h4>Verdict</h4><p>AI analyses both and delivers a fair, detailed ruling.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SIDE A -->
+<div class="page" id="pg-side-a">
+  <nav><span class="logo">JUDGE <span>&</span> JURY</span><span class="step-tag">Step 1 of 3</span></nav>
+  <div class="body">
+    <div class="form-card">
+      <div class="form-eyebrow ey-a"><span class="dot dot-a"></span>Side A — Your turn</div>
+      <h2>State your case.</h2>
+      <p class="form-sub">This is private. Side B will not see what you write. Be honest and include as much detail as possible — the more context, the sharper the verdict.</p>
+      <label class="field-label">Topic or context <span style="opacity:0.5">(optional)</span></label>
+      <input type="text" class="inp" id="a-topic" placeholder="e.g. Workplace disagreement, relationship dispute, debate about X...">
+      <label class="field-label">Your argument</label>
+      <textarea class="inp" id="a-arg" placeholder="Explain your side fully. What happened? What's your reasoning? What evidence or context supports your position?"></textarea>
+      <div class="err" id="a-err">Please write your argument before continuing.</div>
+      <button class="action-btn" onclick="submitA()">Submit & Generate Link for Side B →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SHARE -->
+<div class="page" id="pg-share">
+  <nav><span class="logo">JUDGE <span>&</span> JURY</span><span class="step-tag">Step 2 of 3</span></nav>
+  <div class="body">
+    <div class="share-wrap">
+      <span class="share-icon">🔗</span>
+      <h2>Side A submitted.</h2>
+      <p>Now send this private link to Side B. They open it on their own device and write their argument — without ever seeing yours.</p>
+      <div class="link-box">
+        <span class="link-text" id="share-link-txt">generating...</span>
+        <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy</button>
+      </div>
+      <p class="share-note">The link securely carries Side A's encoded argument. Side B should open it privately on their own phone or laptop.</p>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: SIDE B -->
+<div class="page" id="pg-side-b">
+  <nav><span class="logo">JUDGE <span>&</span> JURY</span><span class="step-tag">Step 2 of 3</span></nav>
+  <div class="body">
+    <div class="form-card">
+      <div class="form-eyebrow ey-b"><span class="dot dot-b"></span>Side B — Your turn</div>
+      <h2>Now state your case.</h2>
+      <p class="form-sub">Side A has already submitted privately. You cannot see their argument. Write your own side honestly — the AI will hear both without bias.</p>
+      <label class="field-label">Your argument</label>
+      <textarea class="inp" id="b-arg" placeholder="Explain your side fully. What happened from your perspective? What reasoning or evidence supports your position?"></textarea>
+      <div class="err" id="b-err">Please write your argument before continuing.</div>
+      <button class="action-btn" onclick="submitB()">Submit & Get the Verdict ⚖</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE: LOADING -->
+<div class="page" id="pg-loading">
+  <nav><span class="logo">JUDGE <span>&</span> JURY</span><span class="step-tag">Deliberating...</span></nav>
+  <div class="loading-body">
+    <span class="gavel">⚖️</span>
+    <strong id="load-txt">The Arbiter is deliberating...</strong>
+    <p>Weighing both arguments. Takes about 15 seconds.</p>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- PAGE: VERDICT -->
+<div class="page" id="pg-verdict">
+  <nav><span class="logo">JUDGE <span>&</span> JURY</span><span class="step-tag">The Verdict</span></nav>
+  <div class="verdict-body">
+    <div class="v-inner" id="v-inner"></div>
+    <button class="restart-btn" onclick="restart()">↩ Start a new case</button>
+  </div>
+</div>
+
+<script>
+  let stateA = { topic: '', arg: '' };
+  let shareURL = '';
+  let phraseTimer;
+  const phrases = ["The Arbiter is deliberating...","Weighing the evidence...","Examining both arguments...","Assessing logic and fairness...","Reaching a conclusion..."];
+
+  function goTo(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  function enc(s) { return btoa(unescape(encodeURIComponent(s))); }
+  function dec(s) { try { return decodeURIComponent(escape(atob(s))); } catch(e) { return ''; } }
+
+  function clamp(v) { const n=parseInt(v); return isNaN(n)?50:Math.min(100,Math.max(0,n)); }
+
+  function startPhrases() {
+    let i=0;
+    document.getElementById('load-txt').textContent=phrases[0];
+    phraseTimer=setInterval(()=>{ i=(i+1)%phrases.length; document.getElementById('load-txt').textContent=phrases[i]; },2100);
+  }
+  function stopPhrases() { clearInterval(phraseTimer); }
+
+  function submitA() {
+    const arg=document.getElementById('a-arg').value.trim();
+    const topic=document.getElementById('a-topic').value.trim();
+    if(!arg){ document.getElementById('a-err').style.display='block'; return; }
+    document.getElementById('a-err').style.display='none';
+    stateA={topic,arg};
+    const payload=enc(JSON.stringify(stateA));
+    shareURL=window.location.href.split('#')[0]+'#b='+payload;
+    document.getElementById('share-link-txt').textContent=shareURL;
+    goTo('pg-share');
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(shareURL).then(()=>{
+      const btn=document.getElementById('copy-btn');
+      btn.textContent='Copied ✓'; btn.classList.add('copied');
+      setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); },2500);
+    });
+  }
+
+  function submitB() {
+    const arg=document.getElementById('b-arg').value.trim();
+    if(!arg){ document.getElementById('b-err').style.display='block'; return; }
+    document.getElementById('b-err').style.display='none';
+    goTo('pg-loading');
+    startPhrases();
+    runVerdict(stateA.topic, stateA.arg, arg);
+  }
+
+  async function runVerdict(topic, argA, argB) {
+    const ctx=topic?`Context: ${topic}\n\n`:'';
+    const prompt=`You are an impartial, intellectually rigorous arbiter. Analyse these two arguments and deliver a fair, detailed verdict.\n\n${ctx}SIDE A: "${argA}"\n\nSIDE B: "${argB}"\n\nRespond ONLY with a valid JSON object. No preamble, no markdown fences. Required keys:\n- "winner": "A", "B", or "TIE"\n- "winner_reason": punchy 8-12 word headline saying who won and why\n- "summary": 2-3 sentence executive summary of the verdict\n- "score_a": integer 0-100 for how strong Side A's argument is\n- "score_b": integer 0-100 for how strong Side B's argument is\n- "analysis_a": 3-5 sentences on Side A — logic, evidence quality, strengths, weaknesses\n- "analysis_b": 3-5 sentences on Side B — logic, evidence quality, strengths, weaknesses\n- "full_analysis": 3-4 paragraphs of thorough deliberation. Plain text, newline between paragraphs.`;
+
+    try {
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:prompt}]})
+      });
+      const raw=await res.json();
+      const text=(raw.content||[]).map(b=>b.text||'').join('');
+      const data=JSON.parse(text.replace(/```json|```/g,'').trim());
+      stopPhrases();
+      renderVerdict(data);
+      goTo('pg-verdict');
+    } catch(e) {
+      stopPhrases();
+      goTo('pg-side-b');
+      const err=document.getElementById('b-err');
+      err.textContent='Something went wrong — please try again.';
+      err.style.display='block';
+    }
+  }
+
+  function renderVerdict(d) {
+    const sA=clamp(d.score_a), sB=clamp(d.score_b);
+    const bCls=d.winner==='A'?'win-a':d.winner==='B'?'win-b':'win-tie';
+    const tag=d.winner==='A'?'Side A prevails':d.winner==='B'?'Side B prevails':'The jury is split';
+    const paras=(d.full_analysis||'').split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('');
+    document.getElementById('v-inner').innerHTML=`
+      <div class="v-banner ${bCls}">
+        <div class="v-tag">${tag}</div>
+        <div class="v-headline">${d.winner_reason||''}</div>
+        <p class="v-summary">${d.summary||''}</p>
+      </div>
+      <div class="block">
+        <div class="block-lbl">Argument Strength</div>
+        <div class="sc-line"><span class="sc-name" style="color:#7EB8F0">Side A</span><div class="sc-track"><div class="sc-fill f-a" id="fa"></div></div><span class="sc-num">${sA}</span></div>
+        <div class="sc-line"><span class="sc-name" style="color:#8FD4A8">Side B</span><div class="sc-track"><div class="sc-fill f-b" id="fb"></div></div><span class="sc-num">${sB}</span></div>
+      </div>
+      <div class="ag">
+        <div class="ac ac-a"><h4>Side A — Analysis</h4><p>${d.analysis_a||''}</p></div>
+        <div class="ac ac-b"><h4>Side B — Analysis</h4><p>${d.analysis_b||''}</p></div>
+      </div>
+      <div class="block delib"><h4>Full Deliberation</h4>${paras}</div>
+    `;
+    setTimeout(()=>{
+      const fa=document.getElementById('fa'), fb=document.getElementById('fb');
+      if(fa) fa.style.width=sA+'%';
+      if(fb) fb.style.width=sB+'%';
+    },200);
+  }
+
+  function restart() {
+    stateA={topic:'',arg:''}; shareURL='';
+    ['a-arg','a-topic','b-arg'].forEach(id=>document.getElementById(id).value='');
+    ['a-err','b-err'].forEach(id=>document.getElementById(id).style.display='none');
+    document.getElementById('v-inner').innerHTML='';
+    history.replaceState(null,'',window.location.pathname);
+    goTo('pg-land');
+  }
+
+  window.addEventListener('load',()=>{
+    const h=window.location.hash;
+    if(h.startsWith('#b=')){
+      const decoded=dec(h.replace('#b=',''));
+      if(decoded){ try{ stateA=JSON.parse(decoded); goTo('pg-side-b'); }catch(e){} }
+    }
+  });
+</script>
+</body>
+</html>
